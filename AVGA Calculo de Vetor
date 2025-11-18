@@ -1,0 +1,126 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <locale.h>
+#include <math.h>
+
+void configurarLocalizacao() {
+    setlocale(LC_ALL, "Portuguese");
+}
+
+// Função para inserir vetores genéricos
+void inserirVetor(float vetor[], int n) {
+    for (int i = 0; i < n; i++) {
+        printf("Digite a componente %d do vetor: ", i + 1);
+        scanf("%f", &vetor[i]);
+    }
+}
+
+// Função para calcular o produto escalar de dois vetores
+float produtoEscalar(float u[], float v[], int n) {
+    float produto = 0.0;
+    for (int i = 0; i < n; i++) {
+        produto += u[i] * v[i];
+    }
+    return produto;
+}
+
+// Função para calcular o produto vetorial de dois vetores (3D)
+void produtoVetorial(float u[3], float v[3], float resultado[3]) {
+    resultado[0] = u[1]*v[2] - u[2]*v[1];
+    resultado[1] = u[2]*v[0] - u[0]*v[2];
+    resultado[2] = u[0]*v[1] - u[1]*v[0];
+}
+
+// Função para calcular o produto misto de três vetores (3D)
+float produtoMisto(float u[3], float v[3], float w[3]) {
+    float vetorial[3];
+    produtoVetorial(v, w, vetorial);
+    return produtoEscalar(u, vetorial, 3);
+}
+
+// Função para calcular a projeção do vetor A sobre B (3D)
+void projecao(float A[3], float B[3], float resultado[3]) {
+    float escalar = produtoEscalar(A, B, 3) / produtoEscalar(B, B, 3);
+    for (int i = 0; i < 3; i++) {
+        resultado[i] = escalar * B[i];
+    }
+}
+
+// Função para exibir o menu
+void exibirMenu() {
+    printf("\nCALCULADORA VETORIAL\n");
+    printf("\n\t0 - Sair");
+    printf("\n\t1 - Produto escalar (vetores de qualquer dimensão)");
+    printf("\n\t2 - Produto vetorial (apenas 3D)");
+    printf("\n\t3 - Produto misto (apenas 3D)");
+    printf("\n\t4 - Projeção de A sobre B (apenas 3D)");
+    printf("\nEscolha uma opção: ");
+}
+
+int main() {
+    configurarLocalizacao();
+    int opcao, n;
+    float u[100], v[100], w[3], resultado;
+    float vetorial[3], proj[3];
+
+    do {
+        exibirMenu();
+        scanf("%d", &opcao);
+
+        switch(opcao) {
+            case 0:
+                printf("\nSaindo...\n");
+                break;
+
+            case 1: // Produto escalar
+                printf("Digite o tamanho dos vetores: ");
+                scanf("%d", &n);
+
+                printf("Insira os valores do primeiro vetor:\n");
+                inserirVetor(u, n);
+                printf("Insira os valores do segundo vetor:\n");
+                inserirVetor(v, n);
+
+                resultado = produtoEscalar(u, v, n);
+                printf("Produto escalar: %.2f\n", resultado);
+                break;
+
+            case 2: // Produto vetorial
+                printf("Insira os valores do primeiro vetor (3D):\n");
+                inserirVetor(u, 3);
+                printf("Insira os valores do segundo vetor (3D):\n");
+                inserirVetor(v, 3);
+
+                produtoVetorial(u, v, vetorial);
+                printf("Produto vetorial: (%.2f, %.2f, %.2f)\n", vetorial[0], vetorial[1], vetorial[2]);
+                break;
+
+            case 3: // Produto misto
+                printf("Insira os valores do vetor u (3D):\n");
+                inserirVetor(u, 3);
+                printf("Insira os valores do vetor v (3D):\n");
+                inserirVetor(v, 3);
+                printf("Insira os valores do vetor w (3D):\n");
+                inserirVetor(w, 3);
+
+                resultado = produtoMisto(u, v, w);
+                printf("Produto misto: %.2f\n", resultado);
+                break;
+
+            case 4: // Projeção
+                printf("Insira os valores do vetor A (3D):\n");
+                inserirVetor(u, 3);
+                printf("Insira os valores do vetor B (3D):\n");
+                inserirVetor(v, 3);
+
+                projecao(u, v, proj);
+                printf("Projeção de A sobre B: (%.2f, %.2f, %.2f)\n", proj[0], proj[1], proj[2]);
+                break;
+
+            default:
+                printf("Opção inválida!\n");
+        }
+    } while (opcao != 0);
+
+    return 0;
+}
