@@ -1,0 +1,165 @@
+//Fazer um programa na linguagem de programação de sua escolha, exceto python, que recebe um grafo e retorna sequências de possíveis passeios, trilhas e caminhos e se é um grafo Euleriano ou não. 
+
+#include <stdio.h>
+#include <string.h>
+
+#define MAX 30
+
+int n;                   // Numero de vertices
+int grafo[MAX][MAX];     // Matriz de adjacencia
+int visitado[MAX];       // Vertices visitados
+int arestaUsada[MAX][MAX]; // Arestas usadas
+int sequencia[MAX];      // Sequencia atual
+
+// Função para imprimir a sequencia
+void imprimirSequencia(int tamanho) {
+    printf("[");
+    for (int i = 0; i <= tamanho; i++) {
+        printf("%d", sequencia[i]);
+        if (i < tamanho) printf(" -> ");
+    }
+    printf("]\n");
+}
+
+// Gerar todos os caminhos (sem repetir vertices)
+void gerarCaminhos(int vertice, int profundidade) {
+    sequencia[profundidade] = vertice;
+    visitado[vertice] = 1;
+
+    if (profundidade > 0) {
+        printf("Caminho: ");
+        imprimirSequencia(profundidade);
+    }
+
+    for (int i = 0; i < n; i++) {
+        if (grafo[vertice][i] && !visitado[i]) {
+            gerarCaminhos(i, profundidade + 1);
+        }
+    }
+    visitado[vertice] = 0;
+}
+
+// Gerar todas as trilhas (sem repetir arestas)
+void gerarTrilhas(int vertice, int profundidade) {
+    sequencia[profundidade] = vertice;
+
+    if (profundidade > 0) {
+        printf("Trilha: ");
+        imprimirSequencia(profundidade);
+    }
+
+    for (int i = 0; i < n; i++) {
+        if (grafo[vertice][i] && !arestaUsada[vertice][i]) {
+            arestaUsada[vertice][i] = arestaUsada[i][vertice] = 1;
+            gerarTrilhas(i, profundidade + 1);
+            arestaUsada[vertice][i] = arestaUsada[i][vertice] = 0;
+        }
+    }
+}
+
+// Gerar todos os passeios (podem repetir vértices e arestas)
+void gerarPasseios(int vertice, int profundidade, int limite) {
+    sequencia[profundidade] = vertice;
+
+    if (profundidade > 0) {
+        printf("Passeio: ");
+        imprimirSequencia(profundidade);
+    }
+
+    if (profundidade >= limite) return;
+
+    for (int i = 0; i < n; i++) {
+        if (grafo[vertice][i]) {
+            gerarPasseios(i, profundidade + 1, limite);
+        }
+    }
+}
+
+// Verificar se o grafo é Euleriano
+void verificarEuleriano() {
+    int grau, impares = 0;
+
+    for (int i = 0; i < n; i++) {
+        grau = 0;
+        for (int j = 0; j < n; j++) {
+            grau += grafo[i][j];
+        }
+        if (grau % 2 != 0) impares++;
+    }
+
+    printf("\n=== CLASSIFICACAO EULERIANA ===\n");
+    if (impares == 0) {
+        printf("Grafo Euleriano: Tem circuito Euleriano\n");
+    } else if (impares == 2) {
+        printf("Grafo Semi-Euleriano: Tem trilha Euleriana\n");
+    } else {
+        printf("Nao Euleriano: %d vertices de grau impar\n", impares);
+    }
+}
+
+int main() {
+    int limite;
+
+    printf("=== ANALISADOR DE GRAFOS ===\n\n");
+
+    // Entrada do grafo
+    printf("Numero de vertices: ");
+    scanf("%d", &n);
+
+    printf("\nMatriz de adjacencia %dx%d:\n", n, n);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            scanf("%d", &grafo[i][j]);
+        }
+    }
+
+    // Verificação Euleriana
+    verificarEuleriano();
+
+    // Gerar caminhos
+    printf("\n=== CAMINHOS (sem repetir vertices) ===\n");
+    for (int i = 0; i < n; i++) {
+        memset(visitado, 0, sizeof(visitado));
+        gerarCaminhos(i, 0);
+    }
+
+    // Gerar trilhas
+    printf("\n=== TRILHAS (sem repetir arestas) ===\n");
+    memset(arestaUsada, 0, sizeof(arestaUsada));
+    for (int i = 0; i < n; i++) {
+        gerarTrilhas(i, 0);
+    }
+
+    // Gerar passeios
+    printf("\nComprimento maximo para passeios: ");
+    scanf("%d", &limite);
+
+    printf("\n=== PASSEIOS (limite: %d) ===\n", limite);
+    for (int i = 0; i < n; i++) {
+        gerarPasseios(i, 0, limite);
+    }
+
+    return 0;
+
+    /*
+    Exemplo de entrada:
+    3
+    0 1 1
+    1 0 1
+    1 1 0
+    
+    4
+    0 1 0 0
+    1 0 1 0
+    0 1 0 1
+    0 0 1 0
+
+    5
+    0 1 1 1 1
+    1 0 0 0 0
+    1 0 0 0 0
+    1 0 0 0 0
+    1 0 0 0 0
+    */
+    
+}
