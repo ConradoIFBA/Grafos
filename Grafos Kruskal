@@ -1,0 +1,345 @@
+//Fazer um programa para o algoritmo de Prim e outro para Kruskal na linguagem de programação de sua escolha, exceto python, que recebe um grafo e retorna a árvore geradora mínima e máxima.
+//Kruskal 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+#define MAX 30
+#define INF 99999
+
+int n;                     // Numero de vertices
+int grafo[MAX][MAX];       // Matriz de adjacencia com pesos
+int pai[MAX];              // Para Union-Find
+int rank[MAX];             // Para Union-Find
+
+// Estrutura para aresta
+typedef struct {
+    int u, v;     // Vertices
+    int peso;     // Peso da aresta
+} Aresta;
+
+Aresta arestas[MAX * MAX]; // Todas as arestas
+int numArestas;            // Numero total de arestas
+Aresta agm[MAX];           // Arestas na AGM
+int custoTotal;            // Custo total da AGM
+int agmSize;               // Numero de arestas na AGM
+
+// Funcao para inicializar o grafo
+void inicializarGrafo() {
+    printf("=== ALGORITMO DE KRUSKAL - AGM MINIMA E MAXIMA ===\n\n");
+
+    printf("Numero de vertices: ");
+    scanf("%d", &n);
+
+    printf("\nDigite a matriz de pesos %dx%d:\n", n, n);
+    printf("(Use 0 para indicar ausencia de aresta)\n");
+
+    numArestas = 0;
+
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) { // So meia matriz (grafo nao direcionado)
+            scanf("%d", &grafo[i][j]);
+            grafo[j][i] = grafo[i][j]; // Espelhar
+
+            // Se ha aresta e nao e autoloop
+            if (grafo[i][j] != 0 && i != j) {
+                arestas[numArestas].u = i;
+                arestas[numArestas].v = j;
+                arestas[numArestas].peso = grafo[i][j];
+                numArestas++;
+            }
+        }
+    }
+}
+
+// Funcao para imprimir a matriz
+void imprimirMatriz(int matriz[MAX][MAX], char* titulo) {
+    printf("\n%s:\n", titulo);
+    printf("    ");
+    for (int i = 0; i < n; i++) {
+        printf("%3d ", i);
+    }
+    printf("\n");
+
+    for (int i = 0; i < n; i++) {
+        printf("%2d: ", i);
+        for (int j = 0; j < n; j++) {
+            if (matriz[i][j] == INF) {
+                printf("  - ");
+            } else if (matriz[i][j] == 0 && i != j) {
+                printf("  - ");
+            } else {
+                printf("%3d ", matriz[i][j]);
+            }
+        }
+        printf("\n");
+    }
+}
+
+// Funcoes para Union-Find (estrutura de conjuntos disjuntos)
+void makeSet(int x) {
+    pai[x] = x;
+    rank[x] = 0;
+}
+
+int findSet(int x) {
+    if (x != pai[x]) {
+        pai[x] = findSet(pai[x]); // Path compression
+    }
+    return pai[x];
+}
+
+void unionSets(int x, int y) {
+    int rootX = findSet(x);
+    int rootY = findSet(y);
+
+    if (rootX != rootY) {
+        // Union by rank
+        if (rank[rootX] > rank[rootY]) {
+            pai[rootY] = rootX;
+        } else if (rank[rootX] < rank[rootY]) {
+            pai[rootX] = rootY;
+        } else {
+            pai[rootY] = rootX;
+            rank[rootX]++;
+        }
+    }
+}
+
+// Funcao de comparacao para qsort (crescente)
+int compararCrescente(const void* a, const void* b) {
+    Aresta* a1 = (Aresta*)a;
+    Aresta* a2 = (Aresta*)b;
+    return a1->peso - a2->peso;
+}
+
+// Funcao de comparacao para qsort (decrescente)
+int compararDecrescente(const void* a, const void* b) {
+    Aresta* a1 = (Aresta*)a;
+    Aresta* a2 = (Aresta*)b;
+    return a2->peso - a1->peso;
+}
+
+// Algoritmo de Kruskal para AGM Minima ou Maxima
+void kruskal(bool minimo) {
+    char* tipo = minimo ? "MINIMA" : "MAXIMA";
+    printf("\n=== PROCESSANDO AGM %s (Kruskal) ===\n", tipo);
+
+    // Inicializar Union-Find
+    for (int i = 0; i < n; i++) {
+        makeSet(i);
+    }
+
+    // Ordenar arestas
+    if (minimo) {
+        qsort(arestas, numArestas, sizeof(Aresta), compararCrescente);
+    } else {
+        qsort(arestas, numArestas, sizeof(Aresta), compararDecrescente);
+    }
+
+    // Inicializar AGM
+    agmSize = 0;
+    custoTotal = 0;
+
+    printf("\nArestas ordenadas:\n");
+    for (int i = 0; i < numArestas; i++) {
+        printf("(%d, %d) peso: %d\n", arestas[i].u, arestas[i].v, arestas[i].peso);
+    }
+
+    printf("\nPassos do algoritmo:\n");
+    int passo = 1;
+
+    // Processar arestas em ordem
+    for (int i = 0; i < numArestas; i++) {
+        int u = arestas[i].u;
+        int v = arestas[i].v;
+
+        if (findSet(u) != findSet(v)) {
+            // Aresta nao forma ciclo
+            unionSets(u, v);
+            agm[agmSize] = arestas[i];
+            custoTotal += arestas[i].peso;
+
+            printf("Passo %d: Adiciona aresta (%d, %d) peso %d\n", 
+                   passo, u, v, arestas[i].peso);
+
+            agmSize++;
+            passo++;
+
+            // Parar quando tiver n-1 arestas
+            if (agmSize == n - 1) {
+                break;
+            }
+        } else {
+            printf("Passo %d: Ignora aresta (%d, %d) peso %d (forma ciclo)\n",
+                   passo, u, v, arestas[i].peso);
+            passo++;
+        }
+    }
+
+    printf("\n=== RESULTADO AGM %s ===\n", tipo);
+    printf("Custo total: %d\n", custoTotal);
+
+    // Imprimir arestas da AGM
+    printf("\nArestas da AGM:\n");
+    for (int i = 0; i < agmSize; i++) {
+        printf("(%d, %d) - Peso: %d\n", agm[i].u, agm[i].v, agm[i].peso);
+    }
+
+    // Verificar se a AGM esta completa
+    if (agmSize == n - 1) {
+        printf("\nAGM completa! Tem %d arestas (n-1).\n", agmSize);
+    } else {
+        printf("\nAGM incompleta! Tem apenas %d arestas.\n", agmSize);
+        printf("O grafo pode ser desconexo.\n");
+    }
+}
+
+// Funcao para testar com exemplos pre-definidos
+void testarExemplos() {
+    printf("\n=== EXEMPLOS PRE-DEFINIDOS ===\n");
+    printf("1. Grafo simples (4 vertices)\n");
+    printf("2. Grafo completo K4\n");
+    printf("3. Grafo desconexo\n");
+    printf("4. Grafo em forma de estrela\n");
+    printf("5. Grafo complexo (6 vertices)\n");
+    printf("Escolha: ");
+
+    int opcao;
+    scanf("%d", &opcao);
+
+    switch(opcao) {
+        case 1:
+            n = 4;
+            // Grafo quadrado com pesos
+            int exemplo1[4][4] = {
+                {0, 2, 0, 1},
+                {2, 0, 3, 0},
+                {0, 3, 0, 4},
+                {1, 0, 4, 0}
+            };
+            memcpy(grafo, exemplo1, sizeof(exemplo1));
+            break;
+
+        case 2:
+            n = 4;
+            // Grafo completo K4 com pesos
+            int exemplo2[4][4] = {
+                {0, 1, 2, 3},
+                {1, 0, 4, 5},
+                {2, 4, 0, 6},
+                {3, 5, 6, 0}
+            };
+            memcpy(grafo, exemplo2, sizeof(exemplo2));
+            break;
+
+        case 3:
+            n = 5;
+            // Grafo desconexo
+            int exemplo3[5][5] = {
+                {0, 1, 0, 0, 0},
+                {1, 0, 0, 0, 0},
+                {0, 0, 0, 2, 0},
+                {0, 0, 2, 0, 3},
+                {0, 0, 0, 3, 0}
+            };
+            memcpy(grafo, exemplo3, sizeof(exemplo3));
+            break;
+
+        case 4:
+            n = 5;
+            // Grafo em estrela
+            int exemplo4[5][5] = {
+                {0, 5, 7, 3, 2},
+                {5, 0, 0, 0, 0},
+                {7, 0, 0, 0, 0},
+                {3, 0, 0, 0, 0},
+                {2, 0, 0, 0, 0}
+            };
+            memcpy(grafo, exemplo4, sizeof(exemplo4));
+            break;
+
+        case 5:
+            n = 6;
+            // Grafo complexo
+            int exemplo5[6][6] = {
+                {0, 4, 0, 0, 0, 2},
+                {4, 0, 6, 0, 0, 3},
+                {0, 6, 0, 3, 5, 1},
+                {0, 0, 3, 0, 7, 0},
+                {0, 0, 5, 7, 0, 8},
+                {2, 3, 1, 0, 8, 0}
+            };
+            memcpy(grafo, exemplo5, sizeof(exemplo5));
+            break;
+    }
+
+    // Reconstruir lista de arestas
+    numArestas = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (grafo[i][j] != 0) {
+                arestas[numArestas].u = i;
+                arestas[numArestas].v = j;
+                arestas[numArestas].peso = grafo[i][j];
+                numArestas++;
+            }
+        }
+    }
+}
+
+// Funcao para mostrar diferencas entre Prim e Kruskal
+void mostrarComparacao() {
+    printf("\n=== COMPARACAO: KRUSKAL vs PRIM ===\n");
+    printf("\nKRUSKAL:\n");
+    printf("- Trabalha com arestas\n");
+    printf("- Ordena todas as arestas primeiro\n");
+    printf("- Usa Union-Find para detectar ciclos\n");
+    printf("- Bom para grafos esparsos\n");
+    printf("- Complexidade: O(E log E)\n");
+
+    printf("\nPRIM:\n");
+    printf("- Trabalha com vertices\n");
+    printf("- Mantem uma arvore e expande\n");
+    printf("- Usa fila de prioridade\n");
+    printf("- Bom para grafos densos\n");
+    printf("- Complexidade: O(V^2) ou O(E log V)\n");
+
+    printf("\nAMBOS:\n");
+    printf("- Encontram a mesma AGM minima\n");
+    printf("- Sao algoritmos greedy\n");
+    printf("- Produzem arvore com V-1 arestas\n");
+}
+
+// Funcao principal
+int main() {
+    int opcao;
+
+    printf("=== ALGORITMO DE KRUSKAL ===\n");
+    printf("1. Entrar com grafo manualmente\n");
+    printf("2. Usar exemplo pre-definido\n");
+    printf("Escolha: ");
+    scanf("%d", &opcao);
+
+    if (opcao == 1) {
+        inicializarGrafo();
+    } else {
+        testarExemplos();
+    }
+
+    // Imprimir grafo de entrada
+    imprimirMatriz(grafo, "Grafo de entrada (pesos)");
+
+    // Executar Kruskal para AGM Minima
+    kruskal(true);  // true = AGM minima
+
+    // Executar Kruskal para AGM Maxima
+    kruskal(false); // false = AGM maxima
+
+    // Mostrar comparacao
+    mostrarComparacao();
+
+    return 0;
+}
