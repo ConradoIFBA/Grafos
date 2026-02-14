@@ -1,0 +1,297 @@
+/*
+===============================================================================
+ALGORITMO DE KRUSKAL
+===============================================================================
+
+Este programa:
+
+✔ Lê um grafo ponderado (com pesos)
+✔ Calcula:
+      - Árvore Geradora MÍNIMA
+      - Árvore Geradora MÁXIMA
+✔ Mostra todos os passos do algoritmo
+✔ Detecta ciclos usando Union-Find
+
+-------------------------------------------------------------------------------
+CONCEITO DE ÁRVORE GERADORA MÍNIMA (AGM)
+
+Uma AGM:
+- Conecta todos os vértices
+- Não possui ciclos
+- Tem exatamente (n - 1) arestas
+- Possui o menor custo total possível
+
+-------------------------------------------------------------------------------
+ALGORITMO DE KRUSKAL
+
+Passos:
+
+1) Ordenar as arestas pelo peso
+2) Inicializar cada vértice como conjunto separado
+3) Para cada aresta em ordem:
+      - Se não formar ciclo → adiciona
+      - Se formar ciclo → ignora
+4) Para quando tiver (n - 1) arestas
+
+Complexidade:
+O(E log E)
+
+===============================================================================
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+#define MAX 30
+#define INF 99999
+
+// -----------------------------------------------------------------------------
+// VARIÁVEIS GLOBAIS
+// -----------------------------------------------------------------------------
+
+int n;                       // Número de vértices
+int grafo[MAX][MAX];         // Matriz de adjacência com pesos
+
+// Estrutura para Union-Find
+int pai[MAX];                // Vetor de pais
+int rank[MAX];               // Altura aproximada da árvore
+
+// -----------------------------------------------------------------------------
+// ESTRUTURA DE ARESTA
+// -----------------------------------------------------------------------------
+
+typedef struct {
+    int u, v;    // Vértices conectados
+    int peso;    // Peso da aresta
+} Aresta;
+
+Aresta arestas[MAX * MAX];   // Lista de todas as arestas
+int numArestas;              // Quantidade de arestas
+
+Aresta agm[MAX];             // Arestas escolhidas na AGM
+int custoTotal;              // Soma total dos pesos
+int agmSize;                 // Quantidade de arestas na AGM
+
+// -----------------------------------------------------------------------------
+// INICIALIZAÇÃO DO GRAFO
+// -----------------------------------------------------------------------------
+void inicializarGrafo() {
+
+    printf("=== ALGORITMO DE KRUSKAL - AGM MINIMA E MAXIMA ===\n\n");
+
+    printf("Numero de vertices: ");
+    scanf("%d", &n);
+
+    printf("\nDigite a matriz de pesos %dx%d:\n", n, n);
+    printf("(Use 0 para indicar ausencia de aresta)\n");
+
+    numArestas = 0;
+
+    // Lê apenas metade da matriz (grafo não direcionado)
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) {
+
+            scanf("%d", &grafo[i][j]);
+            grafo[j][i] = grafo[i][j]; // espelhamento
+
+            // Se existe aresta e não é laço
+            if (grafo[i][j] != 0 && i != j) {
+                arestas[numArestas].u = i;
+                arestas[numArestas].v = j;
+                arestas[numArestas].peso = grafo[i][j];
+                numArestas++;
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// UNION-FIND (Conjuntos Disjuntos)
+// -----------------------------------------------------------------------------
+
+// Cada vértice começa sendo seu próprio pai
+void makeSet(int x) {
+    pai[x] = x;
+    rank[x] = 0;
+}
+
+// Encontra o representante do conjunto
+// Usa path compression para acelerar
+int findSet(int x) {
+    if (x != pai[x]) {
+        pai[x] = findSet(pai[x]); // compressão de caminho
+    }
+    return pai[x];
+}
+
+// Une dois conjuntos
+// Usa union by rank
+void unionSets(int x, int y) {
+
+    int rootX = findSet(x);
+    int rootY = findSet(y);
+
+    if (rootX != rootY) {
+
+        if (rank[rootX] > rank[rootY]) {
+            pai[rootY] = rootX;
+        }
+        else if (rank[rootX] < rank[rootY]) {
+            pai[rootX] = rootY;
+        }
+        else {
+            pai[rootY] = rootX;
+            rank[rootX]++;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// FUNÇÕES DE ORDENAÇÃO
+// -----------------------------------------------------------------------------
+
+// Crescente → AGM mínima
+int compararCrescente(const void* a, const void* b) {
+    Aresta* a1 = (Aresta*)a;
+    Aresta* a2 = (Aresta*)b;
+    return a1->peso - a2->peso;
+}
+
+// Decrescente → AGM máxima
+int compararDecrescente(const void* a, const void* b) {
+    Aresta* a1 = (Aresta*)a;
+    Aresta* a2 = (Aresta*)b;
+    return a2->peso - a1->peso;
+}
+
+// -----------------------------------------------------------------------------
+// ALGORITMO DE KRUSKAL
+// -----------------------------------------------------------------------------
+void kruskal(bool minimo) {
+
+    char* tipo = minimo ? "MINIMA" : "MAXIMA";
+
+    printf("\n=== PROCESSANDO AGM %s (Kruskal) ===\n", tipo);
+
+    // Inicializa Union-Find
+    for (int i = 0; i < n; i++)
+        makeSet(i);
+
+    // Ordena arestas
+    if (minimo)
+        qsort(arestas, numArestas, sizeof(Aresta), compararCrescente);
+    else
+        qsort(arestas, numArestas, sizeof(Aresta), compararDecrescente);
+
+    agmSize = 0;
+    custoTotal = 0;
+
+    printf("\nArestas ordenadas:\n");
+    for (int i = 0; i < numArestas; i++)
+        printf("(%d, %d) peso: %d\n",
+               arestas[i].u,
+               arestas[i].v,
+               arestas[i].peso);
+
+    printf("\nPassos do algoritmo:\n");
+
+    int passo = 1;
+
+    // Percorre arestas em ordem
+    for (int i = 0; i < numArestas; i++) {
+
+        int u = arestas[i].u;
+        int v = arestas[i].v;
+
+        // Se pertencem a conjuntos diferentes → não forma ciclo
+        if (findSet(u) != findSet(v)) {
+
+            unionSets(u, v);
+
+            agm[agmSize] = arestas[i];
+            custoTotal += arestas[i].peso;
+
+            printf("Passo %d: Adiciona (%d,%d) peso %d\n",
+                   passo, u, v, arestas[i].peso);
+
+            agmSize++;
+        }
+        else {
+            printf("Passo %d: Ignora (%d,%d) peso %d (forma ciclo)\n",
+                   passo, u, v, arestas[i].peso);
+        }
+
+        passo++;
+
+        if (agmSize == n - 1)
+            break;
+    }
+
+    printf("\n=== RESULTADO AGM %s ===\n", tipo);
+    printf("Custo total: %d\n", custoTotal);
+
+    printf("\nArestas escolhidas:\n");
+    for (int i = 0; i < agmSize; i++)
+        printf("(%d, %d) - Peso %d\n",
+               agm[i].u,
+               agm[i].v,
+               agm[i].peso);
+
+    if (agmSize == n - 1)
+        printf("\nAGM completa!\n");
+    else
+        printf("\nAGM incompleta (grafo pode ser desconexo).\n");
+}
+
+// -----------------------------------------------------------------------------
+// COMPARAÇÃO ENTRE KRUSKAL E PRIM
+// -----------------------------------------------------------------------------
+void mostrarComparacao() {
+
+    printf("\n=== COMPARACAO: KRUSKAL vs PRIM ===\n");
+
+    printf("\nKRUSKAL:\n");
+    printf("- Trabalha com arestas\n");
+    printf("- Ordena todas primeiro\n");
+    printf("- Usa Union-Find\n");
+    printf("- Melhor para grafos esparsos\n");
+    printf("- Complexidade O(E log E)\n");
+
+    printf("\nPRIM:\n");
+    printf("- Trabalha expandindo vértices\n");
+    printf("- Usa fila de prioridade\n");
+    printf("- Melhor para grafos densos\n");
+    printf("- Complexidade O(E log V)\n");
+
+    printf("\nAmbos sao algoritmos greedy.\n");
+}
+
+// -----------------------------------------------------------------------------
+// MAIN
+// -----------------------------------------------------------------------------
+int main() {
+
+    int opcao;
+
+    printf("=== ALGORITMO DE KRUSKAL ===\n");
+    printf("1. Inserir grafo manualmente\n");
+    printf("2. Usar exemplo pre-definido\n");
+    printf("Escolha: ");
+    scanf("%d", &opcao);
+
+    if (opcao == 1)
+        inicializarGrafo();
+    else {
+        printf("Funcao de exemplo omitida nesta versao comentada.\n");
+        return 0;
+    }
+
+    kruskal(true);   // AGM mínima
+    kruskal(false);  // AGM máxima
+
+    mostrarComparacao();
+
+    return 0;
+}
