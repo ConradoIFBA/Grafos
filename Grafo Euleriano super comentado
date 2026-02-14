@@ -1,0 +1,321 @@
+/*
+===============================================================================
+ANALISADOR DE GRAFOS
+===============================================================================
+
+Este programa:
+
+1) Recebe um grafo não direcionado representado por matriz de adjacência
+2) Gera:
+      - Caminhos  (não repetem vértices)
+      - Trilhas   (não repetem arestas)
+      - Passeios  (podem repetir tudo)
+3) Verifica se o grafo é:
+      - Euleriano
+      - Semi-Euleriano
+      - Não Euleriano
+
+-------------------------------------------------------------------------------
+CONCEITOS IMPORTANTES
+-------------------------------------------------------------------------------
+
+GRAFO:
+Um grafo é uma estrutura formada por:
+- Vértices (nós)
+- Arestas (ligações entre vértices)
+
+MATRIZ DE ADJACÊNCIA:
+Se grafo[i][j] == 1 → existe aresta entre i e j
+Se grafo[i][j] == 0 → não existe ligação
+
+-------------------------------------------------------------------------------
+PASSEIO (WALK)
+Pode repetir:
+- vértices
+- arestas
+
+TRILHA (TRAIL)
+Não pode repetir arestas
+Pode repetir vértices
+
+CAMINHO (PATH)
+Não pode repetir vértices
+Consequentemente também não repete arestas
+
+-------------------------------------------------------------------------------
+GRAFO EULERIANO
+
+Um grafo é:
+
+✔ Euleriano
+    → Todos os vértices têm grau PAR
+    → Possui circuito Euleriano (começa e termina no mesmo vértice)
+
+✔ Semi-Euleriano
+    → Exatamente 2 vértices têm grau ÍMPAR
+    → Possui trilha Euleriana (começa em um ímpar e termina no outro)
+
+✘ Não Euleriano
+    → Mais de 2 vértices com grau ímpar
+
+O grau de um vértice é o número de arestas conectadas a ele.
+
+===============================================================================
+*/
+
+#include <stdio.h>
+#include <string.h>
+
+#define MAX 30   // Número máximo permitido de vértices
+
+// -----------------------------------------------------------------------------
+// VARIÁVEIS GLOBAIS
+// -----------------------------------------------------------------------------
+
+int n;                       // Número real de vértices do grafo
+int grafo[MAX][MAX];         // Matriz de adjacência
+int visitado[MAX];           // Marca vértices visitados (para caminhos)
+int arestaUsada[MAX][MAX];   // Marca arestas usadas (para trilhas)
+int sequencia[MAX];          // Armazena o percurso atual durante a recursão
+
+// -----------------------------------------------------------------------------
+// FUNÇÃO: imprimirSequencia
+// Mostra o percurso armazenado no vetor "sequencia"
+// -----------------------------------------------------------------------------
+void imprimirSequencia(int tamanho) {
+
+    printf("[");
+
+    // Percorre do início até a profundidade atual
+    for (int i = 0; i <= tamanho; i++) {
+        printf("%d", sequencia[i]);
+
+        if (i < tamanho)
+            printf(" -> ");
+    }
+
+    printf("]\n");
+}
+
+// -----------------------------------------------------------------------------
+// FUNÇÃO: gerarCaminhos
+// Gera todos os CAMINHOS possíveis a partir de um vértice inicial.
+//
+// CAMINHO:
+// - Não repete vértices
+//
+// Estratégia:
+// - Busca em profundidade (DFS)
+// - Backtracking
+// -----------------------------------------------------------------------------
+void gerarCaminhos(int vertice, int profundidade) {
+
+    // Guarda o vértice atual na posição correspondente da sequência
+    sequencia[profundidade] = vertice;
+
+    // Marca o vértice como visitado para não repetir
+    visitado[vertice] = 1;
+
+    // Se não for o vértice inicial isolado, imprime o caminho atual
+    if (profundidade > 0) {
+        printf("Caminho: ");
+        imprimirSequencia(profundidade);
+    }
+
+    // Percorre todos os possíveis vizinhos
+    for (int i = 0; i < n; i++) {
+
+        // Verifica:
+        // 1) Existe aresta entre vertice e i?
+        // 2) O vértice i ainda não foi visitado?
+        if (grafo[vertice][i] && !visitado[i]) {
+
+            // Chamada recursiva aumentando a profundidade
+            gerarCaminhos(i, profundidade + 1);
+        }
+    }
+
+    // BACKTRACKING:
+    // Desmarca o vértice para permitir outros caminhos possíveis
+    visitado[vertice] = 0;
+}
+
+// -----------------------------------------------------------------------------
+// FUNÇÃO: gerarTrilhas
+// Gera todas as TRILHAS possíveis.
+//
+// TRILHA:
+// - Não repete arestas
+// - Pode repetir vértices
+//
+// Estratégia:
+// - Marca arestas utilizadas
+// - Usa backtracking para liberar após exploração
+// -----------------------------------------------------------------------------
+void gerarTrilhas(int vertice, int profundidade) {
+
+    sequencia[profundidade] = vertice;
+
+    if (profundidade > 0) {
+        printf("Trilha: ");
+        imprimirSequencia(profundidade);
+    }
+
+    for (int i = 0; i < n; i++) {
+
+        // Se existe aresta e ainda não foi usada
+        if (grafo[vertice][i] && !arestaUsada[vertice][i]) {
+
+            // Marca a aresta como usada
+            // Como o grafo é não direcionado, marca os dois lados
+            arestaUsada[vertice][i] = 1;
+            arestaUsada[i][vertice] = 1;
+
+            gerarTrilhas(i, profundidade + 1);
+
+            // BACKTRACKING:
+            // Libera a aresta para outras combinações
+            arestaUsada[vertice][i] = 0;
+            arestaUsada[i][vertice] = 0;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// FUNÇÃO: gerarPasseios
+// Gera todos os PASSEIOS possíveis até um limite de tamanho.
+//
+// PASSEIO:
+// - Pode repetir vértices
+// - Pode repetir arestas
+//
+// Limite é necessário para evitar recursão infinita.
+// -----------------------------------------------------------------------------
+void gerarPasseios(int vertice, int profundidade, int limite) {
+
+    sequencia[profundidade] = vertice;
+
+    if (profundidade > 0) {
+        printf("Passeio: ");
+        imprimirSequencia(profundidade);
+    }
+
+    // Se atingir o limite definido pelo usuário, para
+    if (profundidade >= limite)
+        return;
+
+    for (int i = 0; i < n; i++) {
+
+        // Basta existir aresta (não há restrição)
+        if (grafo[vertice][i]) {
+            gerarPasseios(i, profundidade + 1, limite);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// FUNÇÃO: verificarEuleriano
+//
+// Classifica o grafo em:
+// - Euleriano
+// - Semi-Euleriano
+// - Não Euleriano
+//
+// Baseado na contagem de vértices com grau ímpar.
+// -----------------------------------------------------------------------------
+void verificarEuleriano() {
+
+    int grau;
+    int impares = 0;
+
+    // Para cada vértice
+    for (int i = 0; i < n; i++) {
+
+        grau = 0;
+
+        // Soma as conexões da linha (grau do vértice)
+        for (int j = 0; j < n; j++) {
+            grau += grafo[i][j];
+        }
+
+        // Verifica se o grau é ímpar
+        if (grau % 2 != 0)
+            impares++;
+    }
+
+    printf("\n=== CLASSIFICACAO EULERIANA ===\n");
+
+    if (impares == 0) {
+        printf("Grafo Euleriano: possui circuito Euleriano\n");
+    }
+    else if (impares == 2) {
+        printf("Grafo Semi-Euleriano: possui trilha Euleriana\n");
+    }
+    else {
+        printf("Nao Euleriano: %d vertices de grau impar\n", impares);
+    }
+}
+
+// -----------------------------------------------------------------------------
+// FUNÇÃO PRINCIPAL
+// -----------------------------------------------------------------------------
+int main() {
+
+    int limite;
+
+    printf("=== ANALISADOR DE GRAFOS ===\n\n");
+
+    // Entrada do número de vértices
+    printf("Numero de vertices: ");
+    scanf("%d", &n);
+
+    // Leitura da matriz de adjacência
+    printf("\nMatriz de adjacencia %dx%d:\n", n, n);
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            scanf("%d", &grafo[i][j]);
+        }
+    }
+
+    // Verifica classificação Euleriana
+    verificarEuleriano();
+
+    // -------------------------------------------------------------------------
+    // CAMINHOS
+    // -------------------------------------------------------------------------
+    printf("\n=== CAMINHOS (sem repetir vertices) ===\n");
+
+    for (int i = 0; i < n; i++) {
+
+        // Zera vetor de visitados antes de cada busca
+        memset(visitado, 0, sizeof(visitado));
+
+        gerarCaminhos(i, 0);
+    }
+
+    // -------------------------------------------------------------------------
+    // TRILHAS
+    // -------------------------------------------------------------------------
+    printf("\n=== TRILHAS (sem repetir arestas) ===\n");
+
+    memset(arestaUsada, 0, sizeof(arestaUsada));
+
+    for (int i = 0; i < n; i++) {
+        gerarTrilhas(i, 0);
+    }
+
+    // -------------------------------------------------------------------------
+    // PASSEIOS
+    // -------------------------------------------------------------------------
+    printf("\nComprimento maximo para passeios: ");
+    scanf("%d", &limite);
+
+    printf("\n=== PASSEIOS (limite: %d) ===\n", limite);
+
+    for (int i = 0; i < n; i++) {
+        gerarPasseios(i, 0, limite);
+    }
+
+    return 0;
+}
