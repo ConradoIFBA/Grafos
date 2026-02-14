@@ -1,0 +1,184 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX 50   // Número máximo de vértices permitido
+
+/* =========================================================
+   VARIÁVEIS GLOBAIS
+   ========================================================= */
+
+int n;                     // Número de vértices
+int grafo[MAX][MAX];       // Matriz de adjacência
+int visitado[MAX];         // Vetor para marcar vértices visitados
+
+/* =========================================================
+   IMPLEMENTAÇÃO DA FILA (usada na BFS)
+   ========================================================= */
+
+int fila[MAX];
+int inicio = 0;
+int fim = 0;
+
+/* Função para inserir elemento na fila */
+void enfileirar(int valor) {
+    fila[fim++] = valor;
+}
+
+/* Função para remover elemento da fila */
+int desenfileirar() {
+    return fila[inicio++];
+}
+
+/* Função para verificar se a fila está vazia */
+int filaVazia() {
+    return inicio == fim;
+}
+
+/* =========================================================
+   BUSCA EM LARGURA (BFS)
+   =========================================================
+   - Usa fila
+   - Visita primeiro os vizinhos mais próximos
+   - Ideal para menor caminho em grafos não ponderados
+   ========================================================= */
+
+void BFS(int inicioBusca, int alvo) {
+    printf("\n=== EXECUTANDO BFS ===\n");
+
+    // Inicializa vetor de visitados
+    memset(visitado, 0, sizeof(visitado));
+
+    // Reinicia fila
+    inicio = fim = 0;
+
+    // Marca vértice inicial como visitado
+    visitado[inicioBusca] = 1;
+
+    // Coloca na fila
+    enfileirar(inicioBusca);
+
+    int encontrado = 0;
+
+    printf("Ordem de visita: ");
+
+    while (!filaVazia()) {
+        int verticeAtual = desenfileirar();
+
+        printf("%d ", verticeAtual);
+
+        if (verticeAtual == alvo) {
+            encontrado = 1;
+        }
+
+        // Percorre todos os vértices
+        for (int i = 0; i < n; i++) {
+            if (grafo[verticeAtual][i] == 1 && !visitado[i]) {
+                visitado[i] = 1;
+                enfileirar(i);
+            }
+        }
+    }
+
+    if (encontrado)
+        printf("\nVertice %d FOI encontrado!\n", alvo);
+    else
+        printf("\nVertice %d NAO foi encontrado!\n", alvo);
+}
+
+/* =========================================================
+   BUSCA EM PROFUNDIDADE (DFS)
+   =========================================================
+   - Usa recursão
+   - Vai o mais fundo possível antes de voltar
+   ========================================================= */
+
+int encontradoDFS = 0;
+
+void DFS(int verticeAtual, int alvo) {
+
+    visitado[verticeAtual] = 1;
+
+    printf("%d ", verticeAtual);
+
+    if (verticeAtual == alvo) {
+        encontradoDFS = 1;
+    }
+
+    for (int i = 0; i < n; i++) {
+        if (grafo[verticeAtual][i] == 1 && !visitado[i]) {
+            DFS(i, alvo);
+        }
+    }
+}
+
+/* Função auxiliar para preparar DFS */
+void executarDFS(int inicioBusca, int alvo) {
+
+    printf("\n=== EXECUTANDO DFS ===\n");
+
+    memset(visitado, 0, sizeof(visitado));
+    encontradoDFS = 0;
+
+    printf("Ordem de visita: ");
+
+    DFS(inicioBusca, alvo);
+
+    if (encontradoDFS)
+        printf("\nVertice %d FOI encontrado!\n", alvo);
+    else
+        printf("\nVertice %d NAO foi encontrado!\n", alvo);
+}
+
+/* =========================================================
+   FUNÇÃO PRINCIPAL
+   ========================================================= */
+
+int main() {
+
+    int inicioBusca;
+    int alvo;
+    int opcao;
+
+    printf("=== BUSCA EM GRAFOS (BFS e DFS) ===\n\n");
+
+    /* Entrada do número de vértices */
+    printf("Numero de vertices: ");
+    scanf("%d", &n);
+
+    /* Entrada da matriz de adjacência */
+    printf("\nDigite a matriz de adjacencia (%dx%d):\n", n, n);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            scanf("%d", &grafo[i][j]);
+        }
+    }
+
+    /* Vértice inicial */
+    printf("\nVertice inicial da busca: ");
+    scanf("%d", &inicioBusca);
+
+    /* Vértice alvo */
+    printf("Vertice a ser encontrado: ");
+    scanf("%d", &alvo);
+
+    /* Escolha do algoritmo */
+    printf("\nEscolha o algoritmo:\n");
+    printf("1 - BFS (Busca em Largura)\n");
+    printf("2 - DFS (Busca em Profundidade)\n");
+    printf("Opcao: ");
+    scanf("%d", &opcao);
+
+    switch(opcao) {
+        case 1:
+            BFS(inicioBusca, alvo);
+            break;
+        case 2:
+            executarDFS(inicioBusca, alvo);
+            break;
+        default:
+            printf("Opcao invalida!\n");
+    }
+
+    return 0;
+}
