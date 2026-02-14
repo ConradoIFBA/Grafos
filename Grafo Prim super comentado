@@ -1,0 +1,291 @@
+/*
+===============================================================================
+ALGORITMO DE PRIM - ÁRVORE GERADORA MÍNIMA E MÁXIMA
+===============================================================================
+
+Este programa:
+
+✔ Recebe um grafo ponderado (com pesos)
+✔ Calcula:
+      - AGM Mínima
+      - AGM Máxima
+✔ Mostra passo a passo o crescimento da árvore
+
+-------------------------------------------------------------------------------
+CONCEITO DO ALGORITMO DE PRIM
+
+1) Escolhe um vértice inicial
+2) Marca ele como pertencente à árvore
+3) Procura a menor (ou maior) aresta que conecta a árvore
+   a um vértice ainda não incluído
+4) Repete até incluir todos os vértices
+
+Propriedade importante:
+Em grafos conexos, a AGM sempre terá exatamente (n - 1) arestas.
+
+Complexidade desta versão:
+O(n²)  → pois usa matriz e busca linear
+
+===============================================================================
+*/
+
+#include <stdio.h>
+#include <string.h>
+#include <limits.h>
+#include <stdbool.h>
+
+#define MAX 30
+#define INFINITO INT_MAX
+
+// -----------------------------------------------------------------------------
+// VARIÁVEIS GLOBAIS
+// -----------------------------------------------------------------------------
+
+int n;                       // Número de vértices
+int grafo[MAX][MAX];         // Matriz de adjacência com pesos
+int agm[MAX][MAX];           // Matriz que armazenará a AGM resultante
+int custoTotal;              // Soma total dos pesos da AGM
+
+// -----------------------------------------------------------------------------
+// ESTRUTURA AUXILIAR PARA PRIM
+// -----------------------------------------------------------------------------
+
+typedef struct {
+
+    int incluido;   // 1 se já pertence à AGM
+    int custo;      // Melhor custo encontrado até agora
+    int pai;        // De qual vértice vem a conexão
+
+} VerticeInfo;
+
+VerticeInfo info[MAX];
+
+// -----------------------------------------------------------------------------
+// FUNÇÃO: inicializarGrafo
+// Lê o grafo do usuário
+// -----------------------------------------------------------------------------
+void inicializarGrafo() {
+
+    printf("=== ALGORITMO DE PRIM - AGM MINIMA E MAXIMA ===\n\n");
+
+    printf("Numero de vertices: ");
+    scanf("%d", &n);
+
+    printf("\nDigite a matriz de pesos %dx%d:\n", n, n);
+    printf("(Use 0 para ausencia de aresta)\n");
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+
+            scanf("%d", &grafo[i][j]);
+
+            // Se não há aresta e não é diagonal
+            // Colocamos INFINITO para indicar ausência
+            if (grafo[i][j] == 0 && i != j) {
+                grafo[i][j] = INFINITO;
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// FUNÇÃO: imprimirMatriz
+// Mostra matriz formatada
+// -----------------------------------------------------------------------------
+void imprimirMatriz(int matriz[MAX][MAX], char* titulo) {
+
+    printf("\n%s:\n", titulo);
+
+    for (int i = 0; i < n; i++) {
+
+        for (int j = 0; j < n; j++) {
+
+            if (matriz[i][j] == INFINITO)
+                printf("  - ");
+            else
+                printf("%3d ", matriz[i][j]);
+        }
+
+        printf("\n");
+    }
+}
+
+// -----------------------------------------------------------------------------
+// FUNÇÃO: inicializarPrim
+// Prepara as estruturas para começar o algoritmo
+// -----------------------------------------------------------------------------
+void inicializarPrim(int verticeInicial, bool minimo) {
+
+    for (int i = 0; i < n; i++) {
+
+        info[i].incluido = 0;   // Nenhum vértice na AGM ainda
+        info[i].pai = -1;       // Sem pai definido
+
+        // Se for AGM mínima → começa com INFINITO
+        // Se for máxima → começa com -INFINITO
+        info[i].custo = minimo ? INFINITO : -INFINITO;
+    }
+
+    // Limpa matriz da AGM
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            agm[i][j] = 0;
+
+    custoTotal = 0;
+
+    // Vértice inicial começa com custo 0
+    info[verticeInicial].custo = 0;
+}
+
+// -----------------------------------------------------------------------------
+// FUNÇÃO: encontrarProximoVertice
+// Escolhe o próximo vértice a entrar na AGM
+// -----------------------------------------------------------------------------
+int encontrarProximoVertice(bool minimo) {
+
+    int escolhido = -1;
+
+    if (minimo) {
+
+        int menor = INFINITO;
+
+        for (int i = 0; i < n; i++) {
+            if (!info[i].incluido && info[i].custo < menor) {
+                menor = info[i].custo;
+                escolhido = i;
+            }
+        }
+
+    } else {
+
+        int maior = -INFINITO;
+
+        for (int i = 0; i < n; i++) {
+            if (!info[i].incluido && info[i].custo > maior) {
+                maior = info[i].custo;
+                escolhido = i;
+            }
+        }
+    }
+
+    return escolhido;
+}
+
+// -----------------------------------------------------------------------------
+// FUNÇÃO: prim
+// Implementação do algoritmo de Prim
+// -----------------------------------------------------------------------------
+void prim(bool minimo) {
+
+    char* tipo = minimo ? "MINIMA" : "MAXIMA";
+
+    printf("\n=== PROCESSANDO AGM %s ===\n", tipo);
+
+    int verticeInicial = 0;
+
+    inicializarPrim(verticeInicial, minimo);
+
+    printf("\nPassos do algoritmo:\n");
+
+    for (int passo = 0; passo < n; passo++) {
+
+        int u = encontrarProximoVertice(minimo);
+
+        if (u == -1) {
+            printf("Grafo desconexo! AGM incompleta.\n");
+            return;
+        }
+
+        info[u].incluido = 1;
+
+        // Se não é raiz, adiciona aresta
+        if (info[u].pai != -1) {
+
+            int v = info[u].pai;
+            int peso = grafo[u][v];
+
+            agm[u][v] = peso;
+            agm[v][u] = peso;
+
+            custoTotal += peso;
+
+            printf("Adiciona aresta (%d, %d) peso %d\n",
+                   v, u, peso);
+        }
+
+        // Atualiza custos dos vizinhos
+        for (int v = 0; v < n; v++) {
+
+            if (!info[v].incluido && grafo[u][v] != INFINITO) {
+
+                if (minimo) {
+
+                    if (grafo[u][v] < info[v].custo) {
+                        info[v].custo = grafo[u][v];
+                        info[v].pai = u;
+                    }
+
+                } else {
+
+                    if (grafo[u][v] > info[v].custo) {
+                        info[v].custo = grafo[u][v];
+                        info[v].pai = u;
+                    }
+                }
+            }
+        }
+    }
+
+    printf("\n=== RESULTADO AGM %s ===\n", tipo);
+    printf("Custo total: %d\n", custoTotal);
+
+    printf("\nArestas da AGM:\n");
+
+    int contador = 0;
+
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+
+            if (agm[i][j] != 0) {
+                printf("(%d, %d) - Peso %d\n",
+                       i, j, agm[i][j]);
+                contador++;
+            }
+        }
+    }
+
+    if (contador == n - 1)
+        printf("\nAGM completa! (%d arestas)\n", contador);
+    else
+        printf("\nAGM incompleta!\n");
+}
+
+// -----------------------------------------------------------------------------
+// FUNÇÃO PRINCIPAL
+// -----------------------------------------------------------------------------
+int main() {
+
+    int opcao;
+
+    printf("=== ALGORITMO DE PRIM ===\n");
+    printf("1. Inserir grafo manualmente\n");
+    printf("Escolha: ");
+    scanf("%d", &opcao);
+
+    if (opcao == 1)
+        inicializarGrafo();
+    else
+        return 0;
+
+    imprimirMatriz(grafo, "Grafo de entrada");
+
+    prim(true);   // AGM mínima
+    prim(false);  // AGM máxima
+
+    printf("\n=== DIFERENCA ===\n");
+    printf("AGM Minima → menor custo total\n");
+    printf("AGM Maxima → maior custo total\n");
+    printf("Ambas possuem (n - 1) arestas em grafos conexos.\n");
+
+    return 0;
+}
