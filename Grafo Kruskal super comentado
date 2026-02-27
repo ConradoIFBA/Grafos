@@ -277,7 +277,7 @@ int main() {
 
     printf("=== ALGORITMO DE KRUSKAL ===\n");
     printf("1. Inserir grafo manualmente\n");
-    printf("2. Usar exemplo pre-definido\n");
+    //printf("2. Usar exemplo pre-definido\n");
     printf("Escolha: ");
     scanf("%d", &opcao);
 
