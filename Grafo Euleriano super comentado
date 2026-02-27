@@ -318,4 +318,49 @@ int main() {
     }
 
     return 0;
+
+
+    // -------------------------------------------------------------------------
+    // EXEMPLOS
+    // -------------------------------------------------------------------------
+/*
+Numero de vertices: 3
+
+0 1 1
+1 0 1
+1 1 0
+
+Grafo Euleriano: possui circuito Euleriano
+
+
+Numero de vertices: 4
+
+0 1 0 0
+1 0 1 0
+0 1 0 1
+0 0 1 0
+Grafo Semi-Euleriano: possui trilha Euleriana
+
+Numero de vertices: 5
+
+0 1 1 1 1
+1 0 0 0 0
+1 0 0 0 0
+1 0 0 0 0
+1 0 0 0 0
+
+Nao Euleriano: 4 vertices de grau impar
+
+Numero de vertices: 4
+
+0 1 0 1
+1 0 1 0
+0 1 0 1
+1 0 1 0
+
+Grafo Euleriano: possui circuito Euleriano
+
+*/
+
+
 }
