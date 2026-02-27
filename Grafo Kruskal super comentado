@@ -56,7 +56,7 @@ int grafo[MAX][MAX];         // Matriz de adjacência com pesos
 
 // Estrutura para Union-Find
 int pai[MAX];                // Vetor de pais
-int rank[MAX];               // Altura aproximada da árvore
+int rank_uf[MAX];            // Altura aproximada da árvore (renomeado para evitar conflito)
 
 // -----------------------------------------------------------------------------
 // ESTRUTURA DE ARESTA
@@ -89,15 +89,15 @@ void inicializarGrafo() {
 
     numArestas = 0;
 
-    // Lê apenas metade da matriz (grafo não direcionado)
+    // ✅ CORREÇÃO: lê a matriz completa (i e j de 0 a n)
+    //    Adiciona aresta apenas quando j > i para evitar duplicatas
     for (int i = 0; i < n; i++) {
-        for (int j = i; j < n; j++) {
+        for (int j = 0; j < n; j++) {
 
             scanf("%d", &grafo[i][j]);
-            grafo[j][i] = grafo[i][j]; // espelhamento
 
-            // Se existe aresta e não é laço
-            if (grafo[i][j] != 0 && i != j) {
+            // Adiciona a aresta apenas uma vez (triângulo superior)
+            if (grafo[i][j] != 0 && j > i) {
                 arestas[numArestas].u = i;
                 arestas[numArestas].v = j;
                 arestas[numArestas].peso = grafo[i][j];
@@ -114,7 +114,7 @@ void inicializarGrafo() {
 // Cada vértice começa sendo seu próprio pai
 void makeSet(int x) {
     pai[x] = x;
-    rank[x] = 0;
+    rank_uf[x] = 0;
 }
 
 // Encontra o representante do conjunto
@@ -135,15 +135,15 @@ void unionSets(int x, int y) {
 
     if (rootX != rootY) {
 
-        if (rank[rootX] > rank[rootY]) {
+        if (rank_uf[rootX] > rank_uf[rootY]) {
             pai[rootY] = rootX;
         }
-        else if (rank[rootX] < rank[rootY]) {
+        else if (rank_uf[rootX] < rank_uf[rootY]) {
             pai[rootX] = rootY;
         }
         else {
             pai[rootY] = rootX;
-            rank[rootX]++;
+            rank_uf[rootX]++;
         }
     }
 }
@@ -246,29 +246,6 @@ void kruskal(bool minimo) {
 }
 
 // -----------------------------------------------------------------------------
-// COMPARAÇÃO ENTRE KRUSKAL E PRIM
-// -----------------------------------------------------------------------------
-void mostrarComparacao() {
-
-    printf("\n=== COMPARACAO: KRUSKAL vs PRIM ===\n");
-
-    printf("\nKRUSKAL:\n");
-    printf("- Trabalha com arestas\n");
-    printf("- Ordena todas primeiro\n");
-    printf("- Usa Union-Find\n");
-    printf("- Melhor para grafos esparsos\n");
-    printf("- Complexidade O(E log E)\n");
-
-    printf("\nPRIM:\n");
-    printf("- Trabalha expandindo vértices\n");
-    printf("- Usa fila de prioridade\n");
-    printf("- Melhor para grafos densos\n");
-    printf("- Complexidade O(E log V)\n");
-
-    printf("\nAmbos sao algoritmos greedy.\n");
-}
-
-// -----------------------------------------------------------------------------
 // MAIN
 // -----------------------------------------------------------------------------
 int main() {
@@ -277,7 +254,6 @@ int main() {
 
     printf("=== ALGORITMO DE KRUSKAL ===\n");
     printf("1. Inserir grafo manualmente\n");
-    //printf("2. Usar exemplo pre-definido\n");
     printf("Escolha: ");
     scanf("%d", &opcao);
 
@@ -291,10 +267,8 @@ int main() {
     kruskal(true);   // AGM mínima
     kruskal(false);  // AGM máxima
 
-    mostrarComparacao();
-
     return 0;
-
+}
 /*
 
 // -----------------------------------------------------------------------------
@@ -409,5 +383,4 @@ AGM incompleta (grafo pode ser desconexo)
 
 Motivo:
 Nao e possivel obter (n - 1) arestas.
-
-}
+    */
