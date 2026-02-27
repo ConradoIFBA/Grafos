@@ -181,4 +181,69 @@ int main() {
     }
 
     return 0;
+
+/* =========================================================
+   VARIÁVEIS GLOBAIS
+   ========================================================= 
+Numero de vertices: 4
+
+0 1 0 0
+1 0 1 0
+0 1 0 1
+0 0 1 0
+
+Vertice inicial da busca: 0
+Vertice a ser encontrado: 3
+
+=== EXECUTANDO BFS ===
+Ordem de visita: 0 1 2 3
+Vertice 3 FOI encontrado!
+=== EXECUTANDO DFS ===
+Ordem de visita: 0 1 2 3
+Vertice 3 FOI encontrado!
+
+--2--
+
+Numero de vertices: 6
+
+0 1 1 0 0 0
+1 0 0 1 1 0
+1 0 0 0 0 1
+0 1 0 0 0 0
+0 1 0 0 0 0
+0 0 1 0 0 0
+
+Vertice inicial da busca: 0
+Vertice a ser encontrado: 5
+BFS
+Ordem de visita: 0 1 2 3 4 5 
+Vertice 5 FOI encontrado!
+DFS
+Ordem de visita: 0 1 3 4 2 5
+Vertice 5 FOI encontrado!
+
+
+--3--
+Numero de vertices: 4
+
+0 1 1 0
+1 0 1 0
+1 1 0 1
+0 0 1 0
+
+Vertice inicial da busca: 0
+Vertice a ser encontrado: 3
+BFS
+Ordem de visita: 0 1 2 3
+Vertice 3 FOI encontrado!
+DFS
+Ordem de visita: 0 1
+Vertice 4 NAO foi encontrado!
+*/
+
+
+
+
+
+
 }
